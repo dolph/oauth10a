@@ -101,6 +101,7 @@ class AuthBase(requests.auth.AuthBase):
             http://example.com/resource
 
         """
+        pass
 
     @property
     def request_elements(self):
@@ -118,6 +119,7 @@ class AuthBase(requests.auth.AuthBase):
         See Signature Base String example in Appendix A.5.1.
 
         """
+        pass
 
 
 class HMACSHA1Auth(AuthBase):
@@ -133,7 +135,7 @@ class HMACSHA1Auth(AuthBase):
     def __init__(self):
         pass
 
-    def __call__(self):
+    def __call__(self, r):
         """9.2.1: Generating Signature
 
         `oauth_signature` is set to the calculated digest octet string, first
@@ -142,13 +144,14 @@ class HMACSHA1Auth(AuthBase):
 
         """
         oauth_signature = self.generate_signature()
+        return r
 
 
 class RSASHA1Auth(AuthBase):
     def __init__(self):
         pass
 
-    def __call__(self):
+    def __call__(self, r):
         """9.3.1: Generating Signature
 
         The Signature Base String is signed using the Consumer's RSA private
@@ -162,7 +165,7 @@ class RSASHA1Auth(AuthBase):
         6.8, then URL-encoded per Parameter Encoding.
 
         """
-        pass
+        return r
 
 
 class PlaintextAuth(AuthBase):
@@ -177,7 +180,7 @@ class PlaintextAuth(AuthBase):
     def __init__(self):
         pass
 
-    def __call__(self):
+    def __call__(self, r):
         """9.4.1: Generating Signature
 
         `oauth_signature` is set to the concatenated encoded values of the
@@ -201,4 +204,4 @@ class PlaintextAuth(AuthBase):
             oauth_signature=djr9rjt0jd78jf88%26
 
         """
-        pass
+        return r
