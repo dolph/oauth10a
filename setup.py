@@ -17,4 +17,7 @@ setuptools.setup(
         'Topic :: Security',
         'Topic :: Software Development :: Libraries',
     ],
+    install_requires=[
+        'requests',
+    ],
 )
