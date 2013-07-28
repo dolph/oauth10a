@@ -3,7 +3,7 @@ import unittest
 import oauth10a
 
 
-class TestOAuth10a(unittest.TestCase):
+class TestCase(unittest.TestCase):
     def setUp(self):
         pass
 
