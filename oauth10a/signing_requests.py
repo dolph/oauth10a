@@ -73,7 +73,8 @@ def request_url(url):
         netloc.append(str(port))
     netloc = ':'.join(netloc)
 
-    return '%s://%s%s' % (parsed.scheme, netloc, parsed.path)
+    return urlparse.urlunparse(
+        (parsed.scheme, netloc, parsed.path, None, None, None))
 
 
 class AuthBase(requests.auth.AuthBase):
