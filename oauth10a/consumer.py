@@ -1,3 +1,8 @@
+import requests
+
+from oauth10a import utils
+
+
 # used to obtain an unauthorized Request Token
 request_token_url = None
 
@@ -8,7 +13,8 @@ user_authorization_url = None
 access_token_url = None
 
 
-def obtain_request_token():
+def obtain_request_token(consumer_key, callback_url='oob',
+                         **additional_params):
     """OAuth 1.0a 6.1.1: Consumer Obtains a Request Token
 
     To obtain a Request Token, the Consumer sends an HTTP request to the
@@ -24,19 +30,31 @@ def obtain_request_token():
     - `oauth_nonce`: As defined in Nonce and Timestamp.
     - `oauth_version`: OPTIONAL. If present, value MUST be 1.0 . Service
       Providers MUST assume the protocol version to be 1.0 if this parameter is
-      not present.  Service Providers' response to non-1.0 value is left
+      not present. Service Providers' response to non-1.0 value is left
       undefined.
     - `oauth_callback`: An absolute URL to which the Service Provider will
       redirect the User back when the Obtaining User Authorization step is
       completed. If the Consumer is unable to receive callbacks or a callback
       URL has been established via other means, the parameter value MUST be set
       to `oob` (case sensitive), to indicate an out-of-band configuration.
-
     - Additional parameters: Any additional parameters, as defined by the
       Service Provider.
 
     """
-    pass
+    # FIXME: this all belongs in oauth10a.signing_requests
+    signature_method = 'HMAC-SHA1'
+    signature = ''
+    payload = {
+        'oauth_consumer_key': consumer_key,
+        'oauth_signature_method': signature_method,
+        'oauth_signature': signature,
+        'oauth_timestamp': utils.timestamp(),
+        'oauth_nonce': utils.nonce(),
+        'oauth_version': '1.0',
+        'oauth_callback': callback_url,
+    }
+    payload.update(**additional_params)
+    return requests.post(request_token_url, params=payload)
 
 
 def direct_user_to_service_provider():
