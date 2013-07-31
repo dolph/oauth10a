@@ -112,6 +112,7 @@ def normalized_request_parameters(oauth_params, get_params=None,
     oauth_params.pop('oauth_signature', None)
 
     additional_params = [d for d in [get_params, post_params] if d is not None]
+
     params = []
     for d in [oauth_params] + additional_params:
         for k in d.keys():
@@ -128,39 +129,6 @@ class AuthBase(requests.auth.AuthBase):
         """Consistent reproducible concatenation of the request elements.
 
         The string is used as an input in hashing or signing algorithms.
-
-        """
-        pass
-
-    @property
-    def normalized_request_parameters(self):
-        """The request parameters are collected, sorted and concatenated into a
-        normalized string:
-
-        - Parameters in the OAuth HTTP Authorization header excluding the realm
-          parameter.
-        - Parameters in the HTTP POST request body (with a content-type of
-          application/x-www-form-urlencoded).
-        - HTTP GET parameters added to the URLs in the query part (as defined
-          by [RFC3986] section 3).
-
-        The oauth_signature parameter MUST be excluded.
-
-        The parameters are normalized into a single string as follows:
-
-        Parameters are sorted by name, using lexicographical byte value
-        ordering. If two or more parameters share the same name, they are
-        sorted by their value. For example:
-
-            a=1, c=hi%20there, f=25, f=50, f=a, z=p, z=t
-
-        Parameters are concatenated in their sorted order into a single string.
-        For each parameter, the name is separated from the corresponding value
-        by an '=' character (ASCII code 61), even if the value is empty. Each
-        name-value pair is separated by an '&' character (ASCII code 38). For
-        example:
-
-            a=1&c=hi%20there&f=25&f=50&f=a&z=p&z=t
 
         """
         pass
