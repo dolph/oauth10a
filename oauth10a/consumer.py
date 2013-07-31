@@ -3,9 +3,6 @@ import requests
 from oauth10a import utils
 
 
-# used to obtain an unauthorized Request Token
-request_token_url = None
-
 # used to obtain User authorization for Consumer access
 user_authorization_url = None
 
@@ -13,8 +10,8 @@ user_authorization_url = None
 access_token_url = None
 
 
-def obtain_request_token(consumer_key, callback_url='oob',
-                         **additional_params):
+def obtain_request_token(request_token_url, consumer_key, secret_key,
+                         callback_url='oob', **additional_params):
     """OAuth 1.0a 6.1.1: Consumer Obtains a Request Token
 
     To obtain a Request Token, the Consumer sends an HTTP request to the
@@ -39,6 +36,8 @@ def obtain_request_token(consumer_key, callback_url='oob',
       to `oob` (case sensitive), to indicate an out-of-band configuration.
     - Additional parameters: Any additional parameters, as defined by the
       Service Provider.
+
+    :param request_token_url: used to obtain an unauthorized Request Token
 
     """
     # FIXME: this all belongs in oauth10a.signing_requests
