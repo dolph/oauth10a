@@ -148,6 +148,8 @@ def signature_base_string(http_method, url, oauth_params, get_params=None,
     request_elements = [http_method, url, params]
     request_elements = map(urllib.quote_plus, request_elements)
     return '&'.join(request_elements)
+
+
 class AuthBase(requests.auth.AuthBase):
     @property
     def signature_base_string(self):
