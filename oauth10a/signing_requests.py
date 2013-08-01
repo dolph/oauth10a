@@ -25,6 +25,7 @@ with the exception of the oauth_signature parameter.
 """
 
 import urlparse
+import urllib
 
 import requests
 
@@ -123,6 +124,30 @@ def normalized_request_parameters(oauth_params, get_params=None,
     return '&'.join(['='.join(param) for param in params])
 
 
+def signature_base_string(http_method, url, oauth_params, get_params=None,
+                          post_params=None):
+    """9.1.3: Concatenate Request Elements
+
+    The following items MUST be concatenated in order into a single string.
+    Each item is encoded and separated by an '&' character (ASCII code 38),
+    even if empty.
+
+    - The HTTP request method used to send the request. Value MUST be
+        uppercase, for example: HEAD, GET, POST, etc.
+    - The request URL from Section 9.1.2.
+    - The normalized request parameters string from Section 9.1.1.
+
+    See Signature Base String example in Appendix A.5.1.
+
+    """
+    http_method = http_method.upper()
+    url = request_url(url)
+    params = normalized_request_parameters(
+        oauth_params, get_params, post_params)
+
+    request_elements = [http_method, url, params]
+    request_elements = map(urllib.quote_plus, request_elements)
+    return '&'.join(request_elements)
 class AuthBase(requests.auth.AuthBase):
     @property
     def signature_base_string(self):
