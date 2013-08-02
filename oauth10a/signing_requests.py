@@ -24,10 +24,15 @@ with the exception of the oauth_signature parameter.
 
 """
 
-import urlparse
+import base64
+import hashlib
+import hmac
 import urllib
+import urlparse
 
 import requests
+
+from oauth10a import utils
 
 
 def request_url(url):
@@ -151,33 +156,43 @@ def signature_base_string(http_method, url, oauth_params, get_params=None,
 
 
 class AuthBase(requests.auth.AuthBase):
-    @property
-    def signature_base_string(self):
+    def __init__(self, consumer_key, consumer_secret, token_key=None,
+                 token_secret=None, callback_url='oob'):
+        self.consumer_key = consumer_key
+        self.consumer_secret = consumer_secret
+        self.token_key = token_key or ''
+        self.token_secret = token_secret or ''
+        self.callback_url = callback_url
+
+    def signature_base_string(self, r, oauth_params):
         """Consistent reproducible concatenation of the request elements.
 
         The string is used as an input in hashing or signing algorithms.
 
         """
-        pass
+        return signature_base_string(r.method, r.url, oauth_params)
 
+    def __call__(self, r):
+        oauth_params = {
+            'oauth_consumer_key': self.consumer_key,
+            'oauth_signature_method': 'HMAC-SHA1',
+            'oauth_timestamp': str(utils.timestamp()),
+            'oauth_nonce': utils.nonce(),
+            'oauth_version': '1.0',
+            'oauth_callback': self.callback_url,
+        }
+        oauth_signature = self.generate_signature(r, oauth_params)
+        oauth_params['oauth_signature'] = oauth_signature
+        params = urllib.urlencode(oauth_params)
 
-    @property
-    def request_elements(self):
-        """9.1.3: Concatenate Request Elements
-
-        The following items MUST be concatenated in order into a single string.
-        Each item is encoded and separated by an '&' character (ASCII code 38),
-        even if empty.
-
-        - The HTTP request method used to send the request. Value MUST be
-          uppercase, for example: HEAD, GET , POST, etc.
-        - The request URL from Section 9.1.2.
-        - The normalized request parameters string from Section 9.1.1.
-
-        See Signature Base String example in Appendix A.5.1.
-
-        """
-        pass
+        if r.method == 'GET':
+            # FIXME: assuming no existing query params
+            r.url = r.url + '?' + params
+        else:
+            r.headers['Authorization'] = 'OAuth %s' % params
+            # FIXME: missing WWW-Authenticate header
+            # r.headers['WWW-Authenticate']
+        return r
 
 
 class HMACSHA1Auth(AuthBase):
@@ -190,24 +205,31 @@ class HMACSHA1Auth(AuthBase):
     (ASCII code 38) even if empty.
 
     """
-    def __init__(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super(HMACSHA1Auth, self).__init__(*args, **kwargs)
+        self.digestmod = hashlib.sha1
 
-    def __call__(self, r):
+    def generate_signature(self, r, oauth_params):
         """9.2.1: Generating Signature
 
         `oauth_signature` is set to the calculated digest octet string, first
         base64-encoded per [RFC2045] section 6.8, then URL-encoded per
-        Parameter Encoding.
+        Parameter Encoding by AuthBase.
 
         """
-        oauth_signature = self.generate_signature()
-        return r
+        signing_key = '%s&%s' % (
+            urllib.quote_plus(self.consumer_secret),
+            urllib.quote_plus(self.token_secret))
+
+        s = self.signature_base_string(r, oauth_params)
+        s = hmac.new(signing_key, msg=s, digestmod=self.digestmod).digest()
+        s = base64.b64encode(s)
+        return s
 
 
 class RSASHA1Auth(AuthBase):
-    def __init__(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super(RSASHA1Auth, self).__init__(*args, **kwargs)
 
     def __call__(self, r):
         """9.3.1: Generating Signature
@@ -235,8 +257,8 @@ class PlaintextAuth(AuthBase):
 
     """
 
-    def __init__(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super(PlaintextAuth, self).__init__(*args, **kwargs)
 
     def __call__(self, r):
         """9.4.1: Generating Signature

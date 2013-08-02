@@ -1,6 +1,6 @@
 import requests
 
-from oauth10a import utils
+from oauth10a import signing_requests
 
 
 # used to obtain User authorization for Consumer access
@@ -11,7 +11,8 @@ access_token_url = None
 
 
 def obtain_request_token(request_token_url, consumer_key, secret_key,
-                         callback_url='oob', **additional_params):
+                         callback_url='oob', http_method='POST',
+                         **additional_params):
     """OAuth 1.0a 6.1.1: Consumer Obtains a Request Token
 
     To obtain a Request Token, the Consumer sends an HTTP request to the
@@ -40,20 +41,15 @@ def obtain_request_token(request_token_url, consumer_key, secret_key,
     :param request_token_url: used to obtain an unauthorized Request Token
 
     """
-    # FIXME: this all belongs in oauth10a.signing_requests
-    signature_method = 'HMAC-SHA1'
-    signature = ''
-    payload = {
-        'oauth_consumer_key': consumer_key,
-        'oauth_signature_method': signature_method,
-        'oauth_signature': signature,
-        'oauth_timestamp': utils.timestamp(),
-        'oauth_nonce': utils.nonce(),
-        'oauth_version': '1.0',
-        'oauth_callback': callback_url,
-    }
-    payload.update(**additional_params)
-    return requests.post(request_token_url, params=payload)
+    auth = signing_requests.HMACSHA1Auth(
+        consumer_key, secret_key, callback_url)
+
+    # FIXME: not handling additional_params
+
+    if http_method == 'POST':
+        return requests.post(request_token_url, auth=auth)
+    elif http_method == 'GET':
+        return requests.get(request_token_url, auth=auth)
 
 
 def direct_user_to_service_provider():
